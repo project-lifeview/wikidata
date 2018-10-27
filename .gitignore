@@ -7,3 +7,6 @@
 build
 dist
 docs/_build
+
+# IDEs
+.idea
