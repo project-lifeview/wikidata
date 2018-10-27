@@ -190,8 +190,8 @@ class Entity(collections.abc.Mapping, collections.abc.Hashable):
         for claim in claims:
             snak = claim['mainsnak']
             value = self.client.decode_datavalue(snak['datatype'], snak['datavalue'])
-            if isinstance(value, Entity) and 'qualifiers' in claim:
-                value = QualifiedEntity(value, claim['qualifiers'])
+            if isinstance(value, Entity):
+                value = QualifiedEntity(value, claim.get('qualifiers', {}))
 
             values.append(value)
 
