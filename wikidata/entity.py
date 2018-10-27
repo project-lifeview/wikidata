@@ -18,7 +18,6 @@ if TYPE_CHECKING:
 
 __all__ = 'Entity', 'EntityId', 'EntityType'
 
-
 #: The identifier of each :class:`Entity`.  Alias of :class:`str`.
 EntityId = NewType('EntityId', str)
 
@@ -186,9 +185,17 @@ class Entity(collections.abc.Mapping, collections.abc.Hashable):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug('claim data: %s',
                          __import__('pprint').pformat(claims))
-        decode = self.client.decode_datavalue
-        return [decode(snak['datatype'], snak['datavalue'])
-                for snak in (claim['mainsnak'] for claim in claims)]
+
+        values = []
+        for claim in claims:
+            snak = claim['mainsnak']
+            value = self.client.decode_datavalue(snak['datatype'], snak['datavalue'])
+            if isinstance(value, Entity):
+                value = Attribute(value, claim['qualifiers'])
+
+            values.append(value)
+
+        return values
 
     def iterlists(self) -> Iterator[Tuple['Entity', Sequence[object]]]:
         for prop in self:
@@ -266,3 +273,15 @@ class Entity(collections.abc.Mapping, collections.abc.Hashable):
             type(self), self.id,
             ' {!r}'.format(label) if label else ''
         )
+
+
+class Attribute(Entity):
+    def __init__(self, entity, qualifiers):
+        super().__init__(entity.id, entity.client)
+        self.qualifiers = qualifiers or {}
+
+    def get_qualifier(self, key: 'Entity'):
+        return [
+            self.client.decode_datavalue(qualifier_value["datatype"], qualifier_value["datavalue"])
+            for qualifier_value in self.qualifiers.get(key.id, [])
+        ]
