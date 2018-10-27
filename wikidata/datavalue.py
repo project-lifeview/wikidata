@@ -195,7 +195,7 @@ class Decoder:
             precision = value['precision']
         except KeyError:
             raise DatavalueError('precision field is missing', datavalue)
-        if precision == 11:
+        if precision in (9, 11):
             return datetime.date(int(time[1:5]), int(time[6:8]),
                                  int(time[9:11]))
         elif precision == 14:
